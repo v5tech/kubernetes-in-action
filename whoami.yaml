@@ -1,0 +1,59 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: whoami
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - image: traefik/whoami:v1.6.0
+          imagePullPolicy: IfNotPresent
+          name: whoami
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+  selector:
+    app: whoami
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /whoami
+            pathType: Prefix

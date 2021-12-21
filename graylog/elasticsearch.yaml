@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch
+  namespace: graylog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  serviceName: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - env:
+            - name: discovery.type
+              value: single-node
+          image: v5cn/elasticsearch:7.15.2
+          imagePullPolicy: IfNotPresent
+          name: es
+          ports:
+            - containerPort: 9200
+              name: http-9200
+              protocol: TCP
+            - containerPort: 9300
+              name: http-9300
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "4"
+              memory: 8Gi
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: es-persistent-storage
+      restartPolicy: Always
+  volumeClaimTemplates:
+    - metadata:
+        name: es-persistent-storage
+      spec:
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 300Gi
+        storageClassName: nfs-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: graylog
+spec:
+  ports:
+    - name: es
+      port: 9200
+      protocol: TCP
+      targetPort: 9200
+  selector:
+    app: elasticsearch
+  type: NodePort

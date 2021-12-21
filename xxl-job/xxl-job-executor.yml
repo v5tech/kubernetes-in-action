@@ -1,0 +1,242 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: xxl-job-executor
+  name: xxl-job-executor
+  namespace: default
+spec:
+  replicas: 16
+  selector:
+    matchLabels:
+      app: xxl-job-executor
+  template:
+    metadata:
+      labels:
+        app: xxl-job-executor
+    spec:
+      containers:
+        - command:
+            - java
+            - -Dlogging.config=/app/config/logback-spring.xml
+            - -Dexecutor.port=9999
+            - -Xmx12288M
+            - -Xms12288M
+            - -XX:MaxMetaspaceSize=512M
+            - -XX:MetaspaceSize=512M
+            - -XX:+UseG1GC
+            - -jar
+            - xxl-job-executor.jar
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  key: spring.profiles.active
+                  name: app-active
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+          image: xxl-job-executor:v1.18
+          imagePullPolicy: IfNotPresent
+          name: xxl-job-executor
+          resources:
+            limits:
+              cpu: "5"
+              memory: 12Gi
+            requests:
+              cpu: "5"
+              memory: 12Gi
+          volumeMounts:
+            - mountPath: /app/xxl-job/jobhandler
+              name: logs-storage
+            - mountPath: /app/config
+              name: logback-spring
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            name: logback-spring
+          name: logback-spring
+        - name: logs-storage
+          persistentVolumeClaim:
+            claimName: xxl-job-executor-persistent-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: xxl-job-executor-persistent-storage
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: nfs-storage
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logback-spring
+  namespace: default
+data:
+  logback-spring.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration debug="false" scan="false">
+        <springProperty scop="context" name="spring.application.name" source="spring.application.name" defaultValue=""/>
+        <property name="log.path" value="logs/"/>
+        <!-- 彩色日志格式 -->
+        <property name="CONSOLE_LOG_PATTERN"
+                  value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+        <!-- graylog全日志格式 -->
+        <property name="GRAY_LOG_FULL_PATTERN"
+                  value="%n%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%logger{50}] %file:%line%n%-5level: %msg%n"/>
+        <!-- graylog简化日志格式 -->
+        <property name="GRAY_LOG_SHORT_PATTERN"
+                  value="%m%nopex"/>
+        <!-- 彩色日志依赖的渲染类 -->
+        <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+        <conversionRule conversionWord="wex"
+                        converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+        <conversionRule conversionWord="wEx"
+                        converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${log.path}/${spring.application.name}-info.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${log.path}/%d{yyyy-MM, aux}/info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <maxFileSize>2GB</maxFileSize>
+                <maxHistory>3</maxHistory>
+            </rollingPolicy>
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>%date [%thread] %-5level [%logger{50}] %file:%line - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${log.path}/${spring.application.name}-error.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${log.path}/%d{yyyy-MM, aux}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <maxFileSize>2GB</maxFileSize>
+                <maxHistory>3</maxHistory>
+            </rollingPolicy>
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>%date [%thread] %-5level [%logger{50}] %file:%line - %msg%n</pattern>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>ERROR</level>
+                <onMatch>ACCEPT</onMatch>
+                <onMismatch>DENY</onMismatch>
+            </filter>
+        </appender>
+
+        <!-- graylog 日志收集 -->
+        <appender name="GELF_TEST" class="de.siegmar.logbackgelf.GelfUdpAppender">
+            <graylogHost>192.168.201.188</graylogHost>
+            <graylogPort>12201</graylogPort>
+            <maxChunkSize>508</maxChunkSize>
+            <useCompression>true</useCompression>
+            <encoder class="de.siegmar.logbackgelf.GelfEncoder">
+                <includeRawMessage>true</includeRawMessage>
+                <includeMarker>true</includeMarker>
+                <includeMdcData>true</includeMdcData>
+                <includeCallerData>false</includeCallerData>
+                <includeRootCauseData>false</includeRootCauseData>
+                <includeLevelName>true</includeLevelName>
+                <shortPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${GRAY_LOG_SHORT_PATTERN}</pattern>
+                </shortPatternLayout>
+                <fullPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${GRAY_LOG_FULL_PATTERN}</pattern>
+                </fullPatternLayout>
+                <staticField>app_name:${spring.application.name}</staticField>
+                <staticField>os_arch:${os.arch}</staticField>
+                <staticField>os_name:${os.name}</staticField>
+                <staticField>os_version:${os.version}</staticField>
+            </encoder>
+        </appender>
+
+        <!-- graylog 日志收集 -->
+        <appender name="GELF_PROD" class="de.siegmar.logbackgelf.GelfUdpAppender">
+            <!--        <graylogHost>graylog.graylog.svc.cluster.local</graylogHost>-->
+            <graylogHost>graylog-svc.graylog.svc.cluster.local</graylogHost>
+            <graylogPort>12201</graylogPort>
+            <maxChunkSize>508</maxChunkSize>
+            <useCompression>true</useCompression>
+            <encoder class="de.siegmar.logbackgelf.GelfEncoder">
+                <includeRawMessage>true</includeRawMessage>
+                <includeMarker>true</includeMarker>
+                <includeMdcData>true</includeMdcData>
+                <includeCallerData>false</includeCallerData>
+                <includeRootCauseData>false</includeRootCauseData>
+                <includeLevelName>true</includeLevelName>
+                <shortPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${GRAY_LOG_SHORT_PATTERN}</pattern>
+                </shortPatternLayout>
+                <fullPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${GRAY_LOG_FULL_PATTERN}</pattern>
+                </fullPatternLayout>
+                <staticField>app_name:${spring.application.name}</staticField>
+                <staticField>os_arch:${os.arch}</staticField>
+                <staticField>os_name:${os.name}</staticField>
+                <staticField>os_version:${os.version}</staticField>
+            </encoder>
+        </appender>
+
+        <logger name="springfox.documentation.schema.property" level="ERROR"/>
+
+        <springProfile name="dev | local">
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+                <appender-ref ref="INFO_FILE"/>
+                <!--            <appender-ref ref="ERROR_FILE"/>-->
+                <appender-ref ref="GELF_PROD"/>
+            </root>
+        </springProfile>
+
+        <springProfile name="test">
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+                <appender-ref ref="INFO_FILE"/>
+                <!--            <appender-ref ref="ERROR_FILE"/>-->
+                <appender-ref ref="GELF_TEST"/>
+            </root>
+        </springProfile>
+
+
+        <springProfile name="prod">
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+                <appender-ref ref="INFO_FILE"/>
+                <!--            <appender-ref ref="ERROR_FILE"/>-->
+                <appender-ref ref="GELF_PROD"/>
+            </root>
+        </springProfile>
+
+
+    </configuration>

@@ -38,9 +38,9 @@ spec:
               name: mongodb-persistent-storage
       restartPolicy: Always
       volumes:
-        - hostPath:
+        - name: localtime
+          hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
-          name: localtime
   volumeClaimTemplates:
     - metadata:
         name: mongodb-persistent-storage

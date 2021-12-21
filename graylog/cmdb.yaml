@@ -1,3 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  spring.profiles.active: prod
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,7 +36,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: spring.profiles.active
-                  name: app-active
+                  name: app-config
           image: cmdb:v1.12
           imagePullPolicy: Always
           name: cmdb

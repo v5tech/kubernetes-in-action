@@ -21,7 +21,6 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
-              name: xxl-job-admin
               protocol: TCP
           resources:
             limits:
@@ -40,9 +39,9 @@ spec:
         - name: xxl-job-admin-config
           configMap:
             name: xxl-job-admin-config
-        - hostPath:
+        - name: localtime
+          hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
-          name: localtime
 
 ---
 apiVersion: v1

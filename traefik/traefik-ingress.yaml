@@ -15,7 +15,7 @@ spec:
         app: tomcat
     spec:
       containers:
-        - image: tomcat
+        - image: tomcat:alpine
           name: tomcat
           ports:
             - containerPort: 8080
@@ -26,7 +26,9 @@ spec:
             limits:
               cpu: 100m
               memory: 100Mi
+
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,7 +46,7 @@ spec:
         app: nginx
     spec:
       containers:
-        - image: nginx
+        - image: nginx:alpine
           name: nginx
           ports:
             - containerPort: 80
@@ -55,7 +57,9 @@ spec:
             limits:
               cpu: 100m
               memory: 100Mi
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -71,7 +75,9 @@ spec:
   selector:
     app: tomcat
   type: ClusterIP
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -87,7 +93,9 @@ spec:
   selector:
     app: nginx
   type: ClusterIP
+
 ---
+
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -97,7 +105,9 @@ spec:
     prefixes:
       - /app1
       - /app2
+
 ---
+
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -112,7 +122,9 @@ spec:
       services:
         - name: api@internal
           kind: TraefikService
+
 ---
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -127,20 +139,20 @@ spec:
     - host: nginx.example.com
       http:
         paths:
-          - backend:
+          - path: /
+            pathType: Prefix
+            backend:
               service:
                 name: nginx
                 port:
                   number: 80
-            path: /
-            pathType: Prefix
     - host: tomcat.example.com
       http:
         paths:
-          - backend:
+          - path: /
+            pathType: Prefix
+            backend:
               service:
                 name: tomcat
                 port:
                   number: 8080
-            path: /
-            pathType: Prefix

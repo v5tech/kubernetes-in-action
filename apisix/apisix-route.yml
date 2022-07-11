@@ -1,0 +1,13 @@
+apiVersion: apisix.apache.org/v2beta3
+kind: ApisixRoute
+metadata:
+  name: whoami-route
+spec:
+  http:
+  - name: whoami
+    match:
+      paths:
+      - "/whoami"
+    backends:
+     - serviceName: whoami
+       servicePort: 80

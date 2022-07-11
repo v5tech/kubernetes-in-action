@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apisix-gateway-ingress
+  namespace: ingress-apisix
+spec:
+  rules:
+  - host: gateway.apisix.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: apisix-gateway
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apisix-dashboard-ingress
+  namespace: ingress-apisix
+spec:
+  rules:
+  - host: dashboard.apisix.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: apisix-dashboard
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

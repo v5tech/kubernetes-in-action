@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubepi-ingress
+  namespace: kube-system
+spec:
+  rules:
+  - host: "kubepi.anchnet.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: kubepi
+            port:
+              number: 80

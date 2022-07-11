@@ -1,0 +1,13 @@
+apiVersion: apisix.apache.org/v2beta3
+kind: ApisixRoute
+metadata:
+  name: web-route
+spec:
+  http:
+  - name: web
+    match:
+      paths:
+      - "/web-route"
+    backends:
+     - serviceName: web
+       servicePort: 8080

@@ -1,3 +1,6 @@
 [submodule "k3s-istio-lab"]
 	path = k3s-istio-lab
 	url = https://github.com/ameizi/k3s-istio-lab.git
+[submodule "argocd-in-action"]
+	path = argocd-in-action
+	url = https://github.com/ameizi/argocd-in-action.git

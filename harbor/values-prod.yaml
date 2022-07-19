@@ -1,0 +1,42 @@
+externalURL: https://harbor.lab.com
+harborAdminPassword: Harbor12345
+logLevel: debug
+
+expose:
+  type: ingress
+  tls:
+    enabled: true
+  ingress:
+    hosts:
+      core: harbor.lab.com
+      notary: notary.lab.com
+    className: nginx
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 50Gi
+    chartmuseum:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 5Gi
+    jobservice:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    database:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    redis:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    trivy:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 5Gi

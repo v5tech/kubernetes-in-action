@@ -1,0 +1,73 @@
+serviceAccount:
+  create: true
+  name: "drone-sa"
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 31080
+
+persistentVolume:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /data
+  size: 20Gi
+  storageClass: "nfs-client"
+
+extraSecretNamesForEnvFrom:
+ - drone-secret
+
+env:
+  DRONE_SERVER_HOST: "192.168.101.58:31080"
+  DRONE_SERVER_PROTO: http
+  # DRONE_RPC_SECRET:
+  ## ===================================================================================
+  ##                         Provider Directives (select ONE)
+  ## -----------------------------------------------------------------------------------
+  ## Select one provider (and only one). Refer to the corresponding documentation link
+  ## before filling the values in. Also note that you can use the 'secretMounts' value
+  ## if you'd rather not have secrets in Kubernetes Secret instead of a ConfigMap.
+  ## ===================================================================================
+
+  ## GitHub-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/github/
+  ##
+  # DRONE_GITHUB_CLIENT_ID:
+  # DRONE_GITHUB_CLIENT_SECRET:
+
+  ## GitLab-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/gitlab/
+  ##
+  # DRONE_GITLAB_CLIENT_ID: abd77e3dccd1a0f0693dad7b917b259f34f6b44e64ce6d45e59d5b2689037bed
+  # DRONE_GITLAB_CLIENT_SECRET: 2c0e75abb7917d1b517ddbb8f78c44a165f403643b120312f2965a252347afbf
+  # DRONE_GITLAB_SERVER: https://gitlab.anchnet.com
+
+  ## Bitbucket Cloud-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/bitbucket-cloud/
+  ##
+  # DRONE_BITBUCKET_CLIENT_ID:
+  # DRONE_BITBUCKET_CLIENT_SECRET:
+
+  ## Bitbucket-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/bitbucket-server/
+  ##
+  # DRONE_GIT_USERNAME:
+  # DRONE_GIT_PASSWORD:
+  # DRONE_STASH_CONSUMER_KEY:
+  # DRONE_STASH_PRIVATE_KEY:
+  # DRONE_STASH_SERVER:
+
+  ## Gitea-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/gitea/
+  ##
+  # DRONE_GITEA_CLIENT_ID: 63dfbe1f-7fc8-4351-a6ca-12a7f5ca6439
+  # DRONE_GITEA_CLIENT_SECRET: J4a5L58ZovqpnVBc7v1EteUriLpBjpsiW8PdgfkSO71W
+  DRONE_GITEA_SERVER: http://192.168.101.58:30000
+
+  ## Gogs-specific variables. See the provider docs here:
+  ## Ref: https://docs.drone.io/installation/providers/gogs/
+  ##
+  # DRONE_GOGS_SERVER:
+  TZ: Asia/Shanghai
+  DRONE_USER_CREATE: username:fengj,admin:true

@@ -1,0 +1,18 @@
+service:
+  type: NodePort
+  port: 3000
+
+extraSecretNamesForEnvFrom:
+ - drone-secret
+
+rbac:
+  buildNamespaces:
+    - drone-ci
+
+env:
+  DRONE_RPC_HOST: 192.168.101.58:31080
+  DRONE_RPC_PROTO: http
+  DRONE_NAMESPACE_DEFAULT: drone-ci
+  DRONE_RUNNER_CAPACITY: 10
+  RONE_TRACE: true
+  TZ: "Asia/Shanghai"

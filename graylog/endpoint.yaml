@@ -7,10 +7,10 @@ subsets:
   - addresses:
       - ip: 10.20.2.57
     ports:
-      - port: 12201 
+      - port: 12201
         name: 12201-udp
         protocol: UDP
-      - port: 12201 
+      - port: 12201
         name: 12201-tcp
         protocol: TCP
 

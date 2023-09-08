@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: graylog-svc
+  namespace: graylog
+subsets:
+  - addresses:
+      - ip: 10.20.2.57
+    ports:
+      - port: 12201 
+        name: 12201-udp
+        protocol: UDP
+      - port: 12201 
+        name: 12201-tcp
+        protocol: TCP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: graylog-svc
+  namespace: graylog
+spec:
+  ports:
+  - name: 12201-tcp
+    port: 12201
+    protocol: TCP
+    targetPort: 12201
+  - name: 12201-udp
+    port: 12201
+    protocol: UDP
+    targetPort: 12201
+  type: ClusterIP

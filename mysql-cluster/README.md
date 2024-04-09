@@ -1,4 +1,4 @@
-# 使用 Kubernetes 部署 MySQL 主从复制、读写分离
+# 使用 Kubernetes 搭建 MySQL 主从复制、读写分离
 
 1、创建ConfigMap
 

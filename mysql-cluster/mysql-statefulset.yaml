@@ -111,7 +111,7 @@ spec:
           exec:
             command: ["mysql", "--defaults-extra-file=/var/passwd.cnf", "-h", "127.0.0.1", "-e", "SELECT 1"]
           # tcpSocket:
-            # port: 3306
+          #   port: 3306
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1

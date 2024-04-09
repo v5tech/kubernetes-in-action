@@ -99,5 +99,4 @@ kubectl delete configmap,secret,service,pvc -l app=mysql
 # 参考文档
 
 - https://github.com/rancher/local-path-provisioner
-
 - https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
